@@ -56,10 +56,9 @@ class ServiceJobCard(WebsiteGenerator):
                             {
                                 "item": part.item,
                                 "qty": part.qty,
-                                "rate": get_item_price(
+                                "rate": self.get_item_price(
                                     part.item,
-                                    self.get_price_list(service_template.price_list),
-                                    self.company,
+                                    service_template.price_list,
                                 ),
                                 "is_billable": part.is_billable,
                             },
@@ -74,9 +73,7 @@ class ServiceJobCard(WebsiteGenerator):
 
         if self.services:
             for service in self.services:
-                service.rate = get_item_price(
-                    service.item, self.get_price_list(service.price_list), self.company
-                )
+                service.rate = self.get_item_price(service.item, service.price_list)
                 if service.is_billable:
                     self.service_charges += service.rate
         if self.parts:
@@ -96,7 +93,7 @@ class ServiceJobCard(WebsiteGenerator):
             if item.rate:
                 continue
 
-            item.rate = get_item_price(item.item, price_list, self.company)
+            item.rate = self.get_item_price(item.item, price_list)
 
     @frappe.whitelist()
     def create_parts_entry(self, type):
@@ -303,34 +300,40 @@ class ServiceJobCard(WebsiteGenerator):
             if not task.completed:
                 frappe.throw(_("Row #{0}: The Tasks is not Completed").format(task.idx))
 
-    def get_price_list(self, template_price_list=None):
-        price_list = frappe.get_value("Customer", self.customer, "default_price_list")
-
-        if not price_list and template_price_list:
-            price_list = template_price_list
+    def get_price_list(self, price_list=None):
+        if not price_list and self.customer:
+            price_list = frappe.get_value(
+                "Customer", self.customer, "default_price_list"
+            )
 
         if not price_list:
             price_list = frappe.get_value(
                 "Service Settings", "Service Settings", "price_list"
             )
-        return price_list or ""
 
+        return price_list
 
-def get_item_price(item_code, price_list, company):
-    company_currency = frappe.get_value("Company", company, "default_currency")
-    item_prices_data = frappe.db.get_value(
-        "Item Price",
-        filters={
-            "price_list": price_list,
-            "item_code": item_code,
-            "currency": company_currency,
-        },
-        fieldname=["item_code", "price_list_rate", "currency"],
-        as_dict=True,
-        order_by="valid_from desc",
-    )
+    def get_item_price(self, item_code, price_list, company=None):
+        if not price_list:
+            price_list = self.get_price_list()
 
-    return item_prices_data.price_list_rate if item_prices_data else 0
+        if not company:
+            company = self.company
+
+        company_currency = frappe.get_value("Company", company, "default_currency")
+        item_prices_data = frappe.db.get_value(
+            "Item Price",
+            filters={
+                "price_list": price_list,
+                "item_code": item_code,
+                "currency": company_currency,
+            },
+            fieldname=["item_code", "price_list_rate", "currency"],
+            as_dict=True,
+            order_by="valid_from desc",
+        )
+
+        return item_prices_data.price_list_rate if item_prices_data else 0
 
 
 @frappe.whitelist()
