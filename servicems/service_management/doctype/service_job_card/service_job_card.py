@@ -148,9 +148,7 @@ class ServiceJobCard(WebsiteGenerator):
         )
 
         self.update_supplied_parts_details(supplied_items, service_parts_entry.name)
-
-        if type == "call":
-            self.save()
+        self.save()
 
     def update_supplied_parts_details(self, supplied_items, parts_entry_no):
         for row in self.parts:
