@@ -612,7 +612,7 @@
   {
      "fieldname": "last_service_odometer_reading",
      "fieldtype": "Data",
-     "label": "Last Service Odometer Reading",
+     "label": "Last Service Odometer Reading"
   }
  ],
  "has_web_view": 1,
