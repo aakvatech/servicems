@@ -150,7 +150,7 @@ frappe.ui.form.on('Service Job Card', {
 	},
 
 	create_parts_entry: function (frm) {
-		frm.call('create_parts_entry', { type: "call" }).then(r => {
+		frm.call('create_parts_entry').then(r => {
 			frm.reload_doc();
 		});
 	},
